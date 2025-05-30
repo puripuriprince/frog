@@ -1,14 +1,41 @@
 import httpx
 import json
+import os
+import re
 from typing import List, Optional
+from dotenv import load_dotenv
+
 from app.models import Message, Workflow, WorkflowNode, ToolDefinition
 from app.registry import list_available_tools
-from app.config import settings
+
+# Load environment variables from .env file
+load_dotenv()
+
+
+def extract_json_from_response(content: str) -> str:
+    """Extract JSON from response, handling markdown code blocks."""
+    content = content.strip()
+    
+    # Check if content is wrapped in markdown code blocks
+    if content.startswith('```'):
+        # Remove markdown code block markers
+        lines = content.split('\n')
+        # Remove first line if it's ```json or ```
+        if lines[0].startswith('```'):
+            lines = lines[1:]
+        # Remove last line if it's ```
+        if lines and lines[-1].strip() == '```':
+            lines = lines[:-1]
+        content = '\n'.join(lines).strip()
+    
+    return content
 
 
 async def autoplan(tools: List[str], messages: List[Message]) -> Optional[Workflow]:
     """Auto-generate workflow from tools and conversation context."""
-    if not settings.openai_key:
+    # Use OPENROUTER_API_KEY environment variable for OpenRouter
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+    if not openrouter_key:
         return None
     
     # Get last user message for planning context
@@ -64,15 +91,15 @@ Workflow:"""
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             response = await client.post(
-                "https://api.openai.com/v1/chat/completions",
+                "https://openrouter.ai/api/v1/chat/completions",
                 headers={
-                    "Authorization": f"Bearer {settings.openai_key}",
+                    "Authorization": f"Bearer {openrouter_key}",
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": "gpt-3.5-turbo",
+                    "model": "openai/gpt-3.5-turbo",
                     "messages": [
-                        {"role": "system", "content": "You are a helpful workflow planner."},
+                        {"role": "system", "content": "You are a helpful workflow planner. Return only valid JSON without markdown formatting."},
                         {"role": "user", "content": planning_prompt}
                     ],
                     "temperature": 0.3,
@@ -86,9 +113,12 @@ Workflow:"""
             result = response.json()
             content = result["choices"][0]["message"]["content"].strip()
             
+            # Extract JSON from response (handle markdown code blocks)
+            json_content = extract_json_from_response(content)
+            
             # Parse the JSON workflow
             try:
-                workflow_data = json.loads(content)
+                workflow_data = json.loads(json_content)
                 workflow = Workflow(**workflow_data)
                 
                 # Validate the workflow uses only available tools
