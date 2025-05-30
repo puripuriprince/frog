@@ -1,3 +1,4 @@
+import os
 from pydantic_settings import BaseSettings
 from typing import Optional
 
@@ -17,6 +18,13 @@ class Settings(BaseSettings):
     
     # Database (future extension)
     database_url: Optional[str] = None
+    
+    # OpenRouter integration
+    openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    
+    # Default model settings
+    default_model: str = "openai/gpt-4o-mini"
     
     class Config:
         env_file = ".env"

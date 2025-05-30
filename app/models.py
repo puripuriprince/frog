@@ -56,26 +56,18 @@ class Workflow(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    """OpenAI-compatible chat completion request."""
-    model: str = Field(default="gpt-3.5-turbo", description="Model identifier")
+    """OpenAI-compatible chat completion request with frog extensions."""
+    model: str = Field(default="openai/gpt-4o-mini", description="Model identifier")
     messages: List[Message] = Field(..., description="Conversation messages")
-    
-    # OpenAI standard parameters
-    temperature: Optional[float] = Field(None, ge=0.0, le=2.0)
-    max_tokens: Optional[int] = Field(None, gt=0)
-    top_p: Optional[float] = Field(None, ge=0.0, le=1.0)
-    frequency_penalty: Optional[float] = Field(None, ge=-2.0, le=2.0)
-    presence_penalty: Optional[float] = Field(None, ge=-2.0, le=2.0)
-    stop: Optional[Union[str, List[str]]] = None
     stream: bool = Field(default=False, description="Enable streaming response")
     
     # Frog extensions
-    workflow: Optional[Workflow] = Field(None, description="Optional agent workflow")
-    tools: Optional[List[str]] = Field(None, description="Available tool names")
-    auto_plan: bool = Field(default=False, description="Auto-generate workflow from tools")
+    tools: Optional[List[str]] = Field(None, description="Available tool names (MCP tools)")
+    workflow_id: Optional[str] = Field(None, description="Workflow ID to use")
+    workflow: Optional[Workflow] = Field(None, description="Full workflow definition (if null, uses base 'planner thinking model')")
     
-    # Authentication
-    account_id: Optional[str] = Field(None, description="Account for secret injection")
+    # Authentication context (populated from bearer token)
+    account_id: Optional[str] = Field(None, description="Account ID extracted from bearer token")
 
 
 class ChatChoice(BaseModel):

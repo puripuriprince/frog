@@ -235,3 +235,20 @@ MIT License - see LICENSE file for details.
 
 Built with ❤️ for hackathons and rapid prototyping 🐸
 
+
+
+
+
+
+
+{
+  "model": "openai/gpt-4o-mini", // openrouter for the models
+  "messages": [
+    {"role": "user", "content": "hello world"}
+  ],
+  "tools": ["browser.search"],  // to implement: tool pool so people can use any tool
+  "workflow_id": null,
+  "workflow": null,
+  "stream": true
+}
+

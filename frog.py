@@ -17,11 +17,11 @@ class FrogClient:
     def chat(
         self,
         messages: List[Dict[str, str]],
-        model: str = "gpt-3.5-turbo",
+        model: str = "openai/gpt-4o-mini",
         stream: bool = False,
         workflow: Optional[Dict[str, Any]] = None,
+        workflow_id: Optional[str] = None,
         tools: Optional[List[str]] = None,
-        auto_plan: bool = False,
         **kwargs
     ) -> Dict[str, Any]:
         """Send chat completion request."""
@@ -30,8 +30,8 @@ class FrogClient:
             "messages": messages,
             "stream": stream,
             "workflow": workflow,
+            "workflow_id": workflow_id,
             "tools": tools,
-            "auto_plan": auto_plan,
             **kwargs
         }
         
@@ -70,21 +70,21 @@ class AsyncFrogClient:
     async def chat(
         self,
         messages: List[Dict[str, str]],
-        model: str = "gpt-3.5-turbo",
+        model: str = "openai/gpt-4o-mini",
         stream: bool = False,
         workflow: Optional[Dict[str, Any]] = None,
+        workflow_id: Optional[str] = None,
         tools: Optional[List[str]] = None,
-        auto_plan: bool = False,
         **kwargs
-    ) -> Dict[str, Any]:
+    ):
         """Send async chat completion request."""
         payload = {
             "model": model,
             "messages": messages,
             "stream": stream,
             "workflow": workflow,
+            "workflow_id": workflow_id,
             "tools": tools,
-            "auto_plan": auto_plan,
             **kwargs
         }
         
@@ -98,8 +98,7 @@ class AsyncFrogClient:
             response.raise_for_status()
             
             if stream:
-                async for chunk in self._parse_stream_async(response.aiter_lines()):
-                    yield chunk
+                return self._parse_stream_async(response.aiter_lines())
             else:
                 return response.json()
     
